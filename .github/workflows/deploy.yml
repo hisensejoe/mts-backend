@@ -1,0 +1,66 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate Python modules
+        run: python -m compileall main.py app alembic
+
+      - name: Validate Docker Compose configuration
+        run: docker compose -f docker-compose.yml config
+
+      - name: Validate development Docker Compose configuration
+        run: docker compose -f docker-compose.yml -f docker-compose.dev.yml config
+
+      - name: Validate production Docker Compose configuration
+        run: docker compose -f docker-compose.yml -f docker-compose.prod.yml config
+
+      - name: Deploy to EC2
+        if: github.event_name != 'pull_request'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            APP_DIR="${{ secrets.EC2_APP_DIR }}"
+
+            cd "$APP_DIR"
+            git fetch --prune origin
+            git checkout main
+            git reset --hard origin/main
+            git clean -fd
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
+            docker image prune -f
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=50 api

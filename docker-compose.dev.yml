@@ -1,0 +1,12 @@
+services:
+  api:
+    environment:
+      UVICORN_RELOAD: "true"
+    ports:
+      - "8002:8000"
+    volumes:
+      - .:/app
+
+  postgres:
+    ports:
+      - "5433:5432"
