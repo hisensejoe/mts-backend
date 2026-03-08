@@ -10,10 +10,12 @@ from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
     OtpChallengeResponse,
+    PinVerificationResponse,
+    VerifyPinRequest,
     VerifyOtpRequest,
 )
 from app.schemas.user import UserRead
-from app.services.auth import request_login_otp, verify_login_otp
+from app.services.auth import request_login_otp, verify_login_otp, verify_user_pin
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -32,6 +34,18 @@ def verify_otp(
     db: Annotated[Session, Depends(get_db)],
 ) -> LoginResponse:
     return verify_login_otp(db=db, phone=payload.phone, otp=payload.otp)
+
+
+@router.post("/verify-pin")
+def verify_pin_endpoint(
+    payload: VerifyPinRequest,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> PinVerificationResponse:
+    return verify_user_pin(
+        user=current_user,
+        device_id=payload.device_id,
+        pin=payload.pin,
+    )
 
 
 @router.get("/me")

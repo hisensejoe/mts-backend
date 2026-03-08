@@ -14,6 +14,11 @@ class VerifyOtpRequest(BaseModel):
     otp: str = Field(min_length=4, max_length=8)
 
 
+class VerifyPinRequest(BaseModel):
+    device_id: str = Field(min_length=1, max_length=255)
+    pin: str = Field(min_length=4, max_length=4)
+
+
 class OtpChallengeResponse(BaseModel):
     message: str
     expires_in: int
@@ -39,3 +44,8 @@ class LoginResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     user: UserContext
+
+
+class PinVerificationResponse(BaseModel):
+    matched: bool
+    message: str

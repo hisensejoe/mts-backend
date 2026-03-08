@@ -9,11 +9,17 @@ from app.core.config import get_settings
 from app.core.security import (
     create_access_token,
     get_otp_code_hash,
+    verify_pin,
     verify_otp_code,
 )
 from app.models.auth_otp import AuthOtpChallenge
 from app.models.user import User, UserStatus
-from app.schemas.auth import LoginResponse, OtpChallengeResponse, UserContext
+from app.schemas.auth import (
+    LoginResponse,
+    OtpChallengeResponse,
+    PinVerificationResponse,
+    UserContext,
+)
 from app.services.sms import send_sms_message
 
 
@@ -126,6 +132,27 @@ def verify_login_otp(db: Session, phone: str, otp: str) -> LoginResponse:
             customer_id=user.customer_id,
             last_login_at=user.last_login_at,
         ),
+    )
+
+
+def verify_user_pin(
+    user: User,
+    device_id: str,
+    pin: str,
+) -> PinVerificationResponse:
+    # `device_id` is part of the request contract for the follow-up device trust flow.
+    # For now we validate the PIN only and leave device binding for the next slice.
+    _ = device_id
+
+    if not verify_pin(pin, user.pin_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="PIN mismatch.",
+        )
+
+    return PinVerificationResponse(
+        matched=True,
+        message="PIN matches.",
     )
 
 
