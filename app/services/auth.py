@@ -51,7 +51,7 @@ def request_login_otp(db: Session, phone: str) -> OtpChallengeResponse:
 
     send_sms_message(
         phone,
-        f"Your MTS Fleet login OTP is {otp_code}. It expires in {settings.auth_otp_expire_minutes} minutes.",
+        f"Your login OTP is {otp_code}. It expires in {settings.auth_otp_expire_minutes} minutes.",
     )
 
     db.commit()

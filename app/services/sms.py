@@ -26,7 +26,6 @@ def send_sms_message(phone: str, message: str) -> None:
         },
         timeout=15,
     )
-    print(response.text)
 
     if response.status_code >= 400:
         raise HTTPException(
