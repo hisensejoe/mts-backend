@@ -6,9 +6,14 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.auth import LoginRequest, LoginResponse
+from app.schemas.auth import (
+    LoginRequest,
+    LoginResponse,
+    OtpChallengeResponse,
+    VerifyOtpRequest,
+)
 from app.schemas.user import UserRead
-from app.services.auth import authenticate_by_phone_pin
+from app.services.auth import request_login_otp, verify_login_otp
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -17,8 +22,16 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def login(
     payload: LoginRequest,
     db: Annotated[Session, Depends(get_db)],
+) -> OtpChallengeResponse:
+    return request_login_otp(db=db, phone=payload.phone)
+
+
+@router.post("/verify-otp")
+def verify_otp(
+    payload: VerifyOtpRequest,
+    db: Annotated[Session, Depends(get_db)],
 ) -> LoginResponse:
-    return authenticate_by_phone_pin(db=db, phone=payload.phone, pin=payload.pin)
+    return verify_login_otp(db=db, phone=payload.phone, otp=payload.otp)
 
 
 @router.get("/me")

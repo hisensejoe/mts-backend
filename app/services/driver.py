@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.pagination import PaginatedResponse, build_paginated_response, paginate
-from app.core.security import normalize_phone
 from app.models.driver import Driver
 from app.schemas.driver import (
     DriverCreate,
@@ -73,7 +72,7 @@ def get_driver_detail(db: Session, driver_id: UUID) -> DriverDetailRead:
 
 
 def create_driver(db: Session, payload: DriverCreate) -> DriverDetailRead:
-    normalized_phone = normalize_phone(payload.phone)
+    normalized_phone = payload.phone
     normalized_license_number = payload.license_number.strip()
     _ensure_unique_phone(db, normalized_phone)
     _ensure_unique_license_number(db, normalized_license_number)
@@ -99,7 +98,7 @@ def update_driver(
     changes = payload.model_dump(exclude_unset=True)
 
     if "phone" in changes and changes["phone"] is not None:
-        normalized_phone = normalize_phone(changes["phone"])
+        normalized_phone = changes["phone"]
         _ensure_unique_phone(db, normalized_phone, exclude_driver_id=driver.id)
         changes["phone"] = normalized_phone
 

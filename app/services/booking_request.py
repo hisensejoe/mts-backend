@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.pagination import PaginatedResponse, build_paginated_response, paginate
-from app.core.security import normalize_phone
 from app.models.booking_request import (
     BookingRequest,
     BookingRequestContainerType,
@@ -157,7 +156,7 @@ def create_booking_request_for_customer(
         preferred_pickup_time=payload.preferred_pickup_time,
         delivery_address=payload.delivery_address.strip(),
         recipient_name=payload.recipient_name.strip(),
-        recipient_phone=normalize_phone(payload.recipient_phone),
+        recipient_phone=payload.recipient_phone,
         notes=_clean_optional_string(payload.notes),
         status=BookingRequestStatus.PENDING,
         quoted_amount=quoted_amount,

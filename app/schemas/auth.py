@@ -7,7 +7,16 @@ from pydantic import BaseModel, Field
 
 class LoginRequest(BaseModel):
     phone: str = Field(min_length=10, max_length=20)
-    pin: str = Field(min_length=4, max_length=4, pattern=r"^\d{4}$")
+
+
+class VerifyOtpRequest(BaseModel):
+    phone: str = Field(min_length=10, max_length=20)
+    otp: str = Field(min_length=4, max_length=8)
+
+
+class OtpChallengeResponse(BaseModel):
+    message: str
+    expires_in: int
 
 
 class AccessTokenResponse(BaseModel):

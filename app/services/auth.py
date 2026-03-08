@@ -1,59 +1,113 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import get_settings
-from app.core.security import create_access_token, normalize_phone, verify_pin
+from app.core.security import (
+    create_access_token,
+    get_otp_code_hash,
+    verify_otp_code,
+)
+from app.models.auth_otp import AuthOtpChallenge
 from app.models.user import User, UserStatus
-from app.schemas.auth import LoginResponse, UserContext
+from app.schemas.auth import LoginResponse, OtpChallengeResponse, UserContext
+from app.services.sms import send_sms_message
 
 
-def authenticate_by_phone_pin(db: Session, phone: str, pin: str) -> LoginResponse:
+def request_login_otp(db: Session, phone: str) -> OtpChallengeResponse:
     settings = get_settings()
-    normalized_phone = normalize_phone(phone)
-    user = db.scalar(
-        select(User)
-        .options(joinedload(User.role))
-        .where(User.phone == normalized_phone)
-    )
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid phone or PIN.",
-        )
-
+    user = _get_active_user_by_phone(db, phone)
     now = datetime.now(timezone.utc)
+
     if user.locked_until is not None and user.locked_until > now:
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
             detail="Account is temporarily locked. Try again later.",
         )
 
-    if user.status == UserStatus.INACTIVE:
+    otp_code = _generate_otp_code(settings.auth_otp_length)
+    expires_at = now + timedelta(minutes=settings.auth_otp_expire_minutes)
+
+    db.execute(
+        update(AuthOtpChallenge)
+        .where(
+            AuthOtpChallenge.user_id == user.id,
+            AuthOtpChallenge.used_at.is_(None),
+        )
+        .values(used_at=now)
+    )
+
+    challenge = AuthOtpChallenge(
+        user_id=user.id,
+        phone=phone,
+        code_hash=get_otp_code_hash(otp_code),
+        expires_at=expires_at,
+    )
+    db.add(challenge)
+    db.flush()
+
+    send_sms_message(
+        phone,
+        f"Your MTS Fleet login OTP is {otp_code}. It expires in {settings.auth_otp_expire_minutes} minutes.",
+    )
+
+    db.commit()
+    return OtpChallengeResponse(
+        message="OTP sent successfully.",
+        expires_in=settings.auth_otp_expire_minutes * 60,
+    )
+
+
+def verify_login_otp(db: Session, phone: str, otp: str) -> LoginResponse:
+    settings = get_settings()
+    user = _get_active_user_by_phone(db, phone)
+    now = datetime.now(timezone.utc)
+
+    if user.locked_until is not None and user.locked_until > now:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive.",
+            status_code=status.HTTP_423_LOCKED,
+            detail="Account is temporarily locked. Try again later.",
         )
 
-    if not verify_pin(pin, user.pin_hash):
+    challenge = db.scalar(
+        select(AuthOtpChallenge)
+        .where(
+            AuthOtpChallenge.user_id == user.id,
+            AuthOtpChallenge.phone == phone,
+            AuthOtpChallenge.used_at.is_(None),
+        )
+        .order_by(AuthOtpChallenge.created_at.desc())
+    )
+
+    if challenge is None or challenge.expires_at <= now:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="OTP is invalid or has expired.",
+        )
+
+    if not verify_otp_code(otp, challenge.code_hash):
+        challenge.attempt_count += 1
         user.failed_login_attempts += 1
         if user.failed_login_attempts >= settings.auth_max_failed_attempts:
             user.status = UserStatus.LOCKED
             user.locked_until = now + timedelta(minutes=settings.auth_lockout_minutes)
+        db.add(challenge)
         db.add(user)
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid phone or PIN.",
+            detail="OTP is invalid or has expired.",
         )
 
+    challenge.used_at = now
     user.failed_login_attempts = 0
     user.locked_until = None
     user.status = UserStatus.ACTIVE
     user.last_login_at = now
+    db.add(challenge)
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -73,3 +127,30 @@ def authenticate_by_phone_pin(db: Session, phone: str, pin: str) -> LoginRespons
             last_login_at=user.last_login_at,
         ),
     )
+
+
+def _get_active_user_by_phone(db: Session, phone: str) -> User:
+    user = db.scalar(
+        select(User)
+        .options(joinedload(User.role))
+        .where(User.phone == phone)
+    )
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No account exists for this phone number.",
+        )
+
+    if user.status == UserStatus.INACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive.",
+        )
+
+    return user
+
+
+def _generate_otp_code(length: int) -> str:
+    upper_bound = 10**length
+    return str(secrets.randbelow(upper_bound)).zfill(length)

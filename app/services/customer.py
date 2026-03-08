@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.pagination import PaginatedResponse, build_paginated_response, paginate
-from app.core.security import normalize_phone
 from app.models.customer import Customer
 from app.schemas.customer import (
     CustomerCreate,
@@ -154,7 +153,7 @@ def _normalize_optional_phone(value: Optional[str]) -> Optional[str]:
     cleaned = _clean_optional_string(value)
     if cleaned is None:
         return None
-    return normalize_phone(cleaned)
+    return cleaned
 
 
 def _normalize_optional_email(value: Optional[str]) -> Optional[str]:
