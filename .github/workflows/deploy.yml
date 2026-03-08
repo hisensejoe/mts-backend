@@ -34,6 +34,25 @@ jobs:
       - name: Validate Python modules
         run: python -m compileall main.py app alembic
 
+      - name: Create CI env file for Compose validation
+        run: |
+          cat <<'EOF' > .env
+          ENVIRONMENT=ci
+          DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/mts_fleet
+          POSTGRES_DB=mts_fleet
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=postgres
+          JWT_SECRET=63e91db8-e1e1-44a3-9ae8-7c3fc9573f1d
+          JWT_ALGORITHM=HS256
+          JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+          AUTH_MAX_FAILED_ATTEMPTS=5
+          AUTH_LOCKOUT_MINUTES=15
+          ADMIN_SEED_PHONE=+233245550001
+          ADMIN_SEED_PIN=1234
+          ADMIN_SEED_FULL_NAME=CI Admin
+          ADMIN_SEED_ROLE=super_admin
+          EOF
+
       - name: Validate Docker Compose configuration
         run: docker compose -f docker-compose.yml config
 
