@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
 from app.core.config import get_settings
-from app.core.security import get_pin_hash, normalize_phone
+from app.core.security import get_pin_hash
 from app.db.session import SessionLocal
 from app.models import Customer, Role, User
 from app.models.user import UserStatus
@@ -49,7 +49,7 @@ def _seed_roles(session) -> None:
 
 def _seed_admin_user(session) -> None:
     settings = get_settings()
-    normalized_phone = normalize_phone(settings.admin_seed_phone)
+    normalized_phone = settings.admin_seed_phone
     existing_user = session.scalar(select(User).where(User.phone == normalized_phone))
     if existing_user is not None:
         return

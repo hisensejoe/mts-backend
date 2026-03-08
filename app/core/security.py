@@ -24,19 +24,20 @@ class TokenPayload(BaseModel):
         return UUID(self.sub)
 
 
-def normalize_phone(phone: str) -> str:
-    normalized = "".join(char for char in phone if char.isdigit() or char == "+")
-    if not normalized.startswith("+"):
-        normalized = f"+{normalized}"
-    return normalized
-
-
 def verify_pin(plain_pin: str, hashed_pin: str) -> bool:
     return password_context.verify(plain_pin, hashed_pin)
 
 
 def get_pin_hash(pin: str) -> str:
     return password_context.hash(pin)
+
+
+def verify_otp_code(plain_code: str, hashed_code: str) -> bool:
+    return password_context.verify(plain_code, hashed_code)
+
+
+def get_otp_code_hash(code: str) -> str:
+    return password_context.hash(code)
 
 
 def create_access_token(

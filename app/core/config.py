@@ -22,6 +22,16 @@ class Settings(BaseSettings):
     )
     auth_max_failed_attempts: int = Field(default=5, alias="AUTH_MAX_FAILED_ATTEMPTS")
     auth_lockout_minutes: int = Field(default=15, alias="AUTH_LOCKOUT_MINUTES")
+    auth_otp_expire_minutes: int = Field(default=10, alias="AUTH_OTP_EXPIRE_MINUTES")
+    auth_otp_length: int = Field(default=6, alias="AUTH_OTP_LENGTH")
+
+    sms_username: SecretStr = Field(default=SecretStr(""), alias="SMS_USERNAME")
+    sms_password: SecretStr = Field(default=SecretStr(""), alias="SMS_PASSWORD")
+    sms_from: str = Field(default="", alias="SMS_FROM")
+    sms_base_url: str = Field(
+        default="http://sms.hisense.com.gh/api/sms/send",
+        alias="SMS_BASE_URL",
+    )
 
     admin_seed_phone: str = Field(default="+233245550001", alias="ADMIN_SEED_PHONE")
     admin_seed_pin: SecretStr = Field(default=SecretStr("1234"), alias="ADMIN_SEED_PIN")

@@ -51,6 +51,9 @@ jobs:
           ADMIN_SEED_PIN=1234
           ADMIN_SEED_FULL_NAME=CI Admin
           ADMIN_SEED_ROLE=super_admin
+          SMS_USERNAME=example-username
+          SMS_PASSWORD=example-pwd
+          SMS_FROM=example-username
           EOF
 
       - name: Validate Docker Compose configuration
