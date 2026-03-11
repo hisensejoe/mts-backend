@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     auth,
     booking_requests,
+    customer_portal,
     customers,
     dashboard,
     drivers,
@@ -18,6 +19,7 @@ api_router.include_router(health.router)
 api_router.include_router(auth.router)
 api_router.include_router(booking_requests.router)
 api_router.include_router(booking_requests.customer_router)
+api_router.include_router(customer_portal.router)
 api_router.include_router(customers.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(drivers.router)
