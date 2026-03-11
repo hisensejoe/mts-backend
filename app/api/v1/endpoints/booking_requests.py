@@ -16,6 +16,11 @@ from app.schemas.booking_request import (
     BookingRequestListFilters,
     BookingRequestRead,
 )
+from app.schemas.customer_portal import (
+    CustomerBookingRequestCreate,
+    CustomerBookingRequestDetailRead,
+    CustomerBookingRequestRead,
+)
 from app.services.booking_request import (
     create_booking_request_for_customer,
     get_booking_request_detail,
@@ -83,26 +88,37 @@ def read_my_booking_requests(
     db: Annotated[Session, Depends(get_db)],
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1),
-) -> PaginatedResponse[BookingRequestRead]:
-    return list_customer_booking_requests(
+) -> PaginatedResponse[CustomerBookingRequestRead]:
+    response = list_customer_booking_requests(
         db=db,
         customer_user=current_user,
         page=page,
         page_size=page_size,
     )
+    return PaginatedResponse[CustomerBookingRequestRead](
+        items=[
+            CustomerBookingRequestRead.model_validate(item)
+            for item in response.items
+        ],
+        page=response.page,
+        page_size=response.page_size,
+        total=response.total,
+        total_pages=response.total_pages,
+    )
 
 
 @customer_router.post("", status_code=201)
 def create_my_booking_request(
-    payload: BookingRequestCreate,
+    payload: CustomerBookingRequestCreate,
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> BookingRequestDetailRead:
-    return create_booking_request_for_customer(
+) -> CustomerBookingRequestDetailRead:
+    booking_request = create_booking_request_for_customer(
         db=db,
         customer_user=current_user,
-        payload=payload,
+        payload=BookingRequestCreate.model_validate(payload.model_dump()),
     )
+    return CustomerBookingRequestDetailRead.model_validate(booking_request)
 
 
 @customer_router.get("/{booking_request_id}")
@@ -110,9 +126,10 @@ def read_my_booking_request(
     booking_request_id: UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> BookingRequestDetailRead:
-    return get_customer_booking_request_detail(
+) -> CustomerBookingRequestDetailRead:
+    booking_request = get_customer_booking_request_detail(
         db=db,
         customer_user=current_user,
         booking_request_id=booking_request_id,
     )
+    return CustomerBookingRequestDetailRead.model_validate(booking_request)

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.config import get_settings
 from app.core.pagination import PaginatedResponse, build_paginated_response, paginate
@@ -79,7 +79,11 @@ def list_customer_shipments(
 
     statement = (
         select(Trip)
-        .options(selectinload(Trip.milestones))
+        .options(
+            selectinload(Trip.milestones),
+            joinedload(Trip.assigned_vehicle),
+            joinedload(Trip.assigned_driver),
+        )
         .where(Trip.customer_id == customer_id)
     )
     count_statement = (
@@ -105,7 +109,11 @@ def get_customer_shipment_detail(
     customer_id = _require_customer_id(customer_user)
     trip = db.scalar(
         select(Trip)
-        .options(selectinload(Trip.milestones))
+        .options(
+            selectinload(Trip.milestones),
+            joinedload(Trip.assigned_vehicle),
+            joinedload(Trip.assigned_driver),
+        )
         .where(Trip.id == trip_id, Trip.customer_id == customer_id)
     )
     if trip is None:
@@ -204,7 +212,11 @@ def _count_customer_booking_requests(
 def _get_recent_customer_trips(db: Session, customer_id) -> list[Trip]:
     return db.scalars(
         select(Trip)
-        .options(selectinload(Trip.milestones))
+        .options(
+            selectinload(Trip.milestones),
+            joinedload(Trip.assigned_vehicle),
+            joinedload(Trip.assigned_driver),
+        )
         .where(Trip.customer_id == customer_id)
         .order_by(Trip.created_at.desc())
         .limit(5)
@@ -223,5 +235,7 @@ def _build_customer_shipment_read(trip: Trip) -> CustomerShipmentRead:
         amount=trip.amount,
         assigned_vehicle_id=trip.assigned_vehicle_id,
         assigned_driver_id=trip.assigned_driver_id,
+        assigned_vehicle_registration=trip.assigned_vehicle.registration_number,
+        assigned_driver_name=trip.assigned_driver.full_name,
         booking_request_id=trip.booking_request_id,
     )

@@ -72,3 +72,17 @@ def read_customer_available_vehicles(
         page=page,
         page_size=page_size,
     )
+
+
+@router.get("/available-fleet")
+def read_customer_available_fleet(
+    _: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)],
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1),
+) -> PaginatedResponse[CustomerAvailableVehicleRead]:
+    return list_available_vehicles_for_customer(
+        db=db,
+        page=page,
+        page_size=page_size,
+    )
