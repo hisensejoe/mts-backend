@@ -42,3 +42,4 @@ class Driver(TimestampMixin, Base):
     )
 
     vehicles: Mapped[list["Vehicle"]] = relationship(back_populates="assigned_driver")
+    trips: Mapped[list["Trip"]] = relationship(back_populates="assigned_driver")

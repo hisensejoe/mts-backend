@@ -5,7 +5,17 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
 from app.db.base import Base
-from app.models import auth_otp, booking_request, customer, driver, role, route, user, vehicle
+from app.models import (
+    auth_otp,
+    booking_request,
+    customer,
+    driver,
+    role,
+    route,
+    trip,
+    user,
+    vehicle,
+)
 
 config = context.config
 

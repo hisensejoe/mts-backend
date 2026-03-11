@@ -8,6 +8,7 @@ from app.models.route import Route
 from app.models.role import Role
 from app.models.user import User
 from app.models.vehicle import Vehicle
+from app.models.trip import Trip, TripMilestone
 
 __all__ = [
     "AuthOtpChallenge",
@@ -16,6 +17,8 @@ __all__ = [
     "Driver",
     "Route",
     "Role",
+    "Trip",
+    "TripMilestone",
     "User",
     "Vehicle",
 ]

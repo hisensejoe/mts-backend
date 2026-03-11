@@ -7,6 +7,7 @@ from app.api.v1.endpoints import (
     drivers,
     health,
     routes,
+    trips,
     vehicles,
 )
 
@@ -18,4 +19,5 @@ api_router.include_router(booking_requests.customer_router)
 api_router.include_router(customers.router)
 api_router.include_router(drivers.router)
 api_router.include_router(routes.router)
+api_router.include_router(trips.router)
 api_router.include_router(vehicles.router)

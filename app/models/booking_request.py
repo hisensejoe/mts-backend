@@ -6,7 +6,16 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import Date, Enum as SqlEnum, ForeignKey, Numeric, String, Text, Time, Uuid
+from sqlalchemy import (
+    Date,
+    Enum as SqlEnum,
+    ForeignKey,
+    Numeric,
+    String,
+    Text,
+    Time,
+    Uuid,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -81,3 +90,4 @@ class BookingRequest(TimestampMixin, Base):
         back_populates="booking_requests_requested"
     )
     route: Mapped["Route"] = relationship(back_populates="booking_requests")
+    trips: Mapped[list["Trip"]] = relationship(back_populates="booking_request")
