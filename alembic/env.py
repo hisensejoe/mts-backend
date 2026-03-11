@@ -10,6 +10,7 @@ from app.models import (
     booking_request,
     customer,
     driver,
+    expense,
     role,
     route,
     trip,

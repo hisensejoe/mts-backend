@@ -69,6 +69,9 @@ class User(TimestampMixin, Base):
     trip_milestones_recorded: Mapped[list["TripMilestone"]] = relationship(
         back_populates="recorded_by_user"
     )
+    expenses_recorded: Mapped[list["Expense"]] = relationship(
+        back_populates="recorded_by_user"
+    )
     otp_challenges: Mapped[list["AuthOtpChallenge"]] = relationship(
         back_populates="user"
     )

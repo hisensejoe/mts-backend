@@ -113,6 +113,7 @@ class Trip(TimestampMixin, Base):
     created_by_user: Mapped[Optional["User"]] = relationship(
         back_populates="trips_created"
     )
+    expenses: Mapped[list["Expense"]] = relationship(back_populates="trip")
     milestones: Mapped[list["TripMilestone"]] = relationship(
         back_populates="trip",
         cascade="all, delete-orphan",
