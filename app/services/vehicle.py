@@ -93,10 +93,10 @@ def create_vehicle(db: Session, payload: VehicleCreate) -> VehicleDetailRead:
 
     vehicle = Vehicle(
         registration_number=normalized_registration_number,
-        make=payload.make.strip(),
-        model=payload.model.strip(),
+        make=_normalize_optional_text(payload.make),
+        model=_normalize_optional_text(payload.model),
         manufacture_year=payload.manufacture_year,
-        body_type=payload.body_type.strip(),
+        body_type=_normalize_optional_text(payload.body_type),
         fuel_type=payload.fuel_type.strip(),
         odometer_km=payload.odometer_km,
         status=payload.status,
@@ -176,3 +176,9 @@ def _ensure_unique_registration_number(
             status_code=status.HTTP_409_CONFLICT,
             detail="A vehicle with this registration number already exists.",
         )
+
+
+def _normalize_optional_text(value: Optional[str]) -> str:
+    if value is None:
+        return ""
+    return value.strip()

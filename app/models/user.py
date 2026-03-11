@@ -65,6 +65,13 @@ class User(TimestampMixin, Base):
     booking_requests_requested: Mapped[list["BookingRequest"]] = relationship(
         back_populates="requested_by_user"
     )
+    trips_created: Mapped[list["Trip"]] = relationship(back_populates="created_by_user")
+    trip_milestones_recorded: Mapped[list["TripMilestone"]] = relationship(
+        back_populates="recorded_by_user"
+    )
+    expenses_recorded: Mapped[list["Expense"]] = relationship(
+        back_populates="recorded_by_user"
+    )
     otp_challenges: Mapped[list["AuthOtpChallenge"]] = relationship(
         back_populates="user"
     )

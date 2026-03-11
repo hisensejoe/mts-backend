@@ -21,7 +21,9 @@ class VehicleBase(BaseModel):
 
 
 class VehicleCreate(VehicleBase):
-    pass
+    make: Optional[str] = Field(default=None, max_length=100)
+    model: Optional[str] = Field(default=None, max_length=100)
+    body_type: Optional[str] = Field(default=None, max_length=100)
 
 
 class VehicleUpdate(BaseModel):

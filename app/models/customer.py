@@ -28,3 +28,4 @@ class Customer(TimestampMixin, Base):
     booking_requests: Mapped[list["BookingRequest"]] = relationship(
         back_populates="customer"
     )
+    trips: Mapped[list["Trip"]] = relationship(back_populates="customer")
